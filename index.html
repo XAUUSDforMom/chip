@@ -1,76 +1,48 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ゲーム内送金履歴</title>
+  <meta charset="UTF-8" />
+  <title>送金履歴</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f9f9f9;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
     table {
-      width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-      background: #fff;
+      width: 100%;
     }
-
     th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
+      border: 1px solid #aaa;
+      padding: 6px;
       text-align: center;
     }
-
     th {
-      background: #eee;
+      background-color: #eee;
     }
   </style>
 </head>
 <body>
-  <h1>送金履歴</h1>
-  <table id="logTable">
-    <thead>
-      <tr>
-        <th>日付</th>
-        <th>送金者</th>
-        <th>受取先</th>
-        <th>金額</th>
-        <th>備考</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h2>ゲーム内送金履歴</h2>
+  <table id="csv-table"></table>
 
   <script>
     const csvUrl = "https://docs.google.com/spreadsheets/d/1-kXlRHjuOwJ8FnCi3RoD_hlivKC6CcBBsqlzl2_dP08/export?format=csv";
 
     fetch(csvUrl)
-      .then(res => res.text())
-      .then(csv => {
-        const rows = csv.trim().split('\n').slice(1); // ヘッダーを除く
-        const tbody = document.querySelector("#logTable tbody");
-
-        rows.forEach(row => {
-          const cols = row.split(',');
+      .then(response => response.text())
+      .then(data => {
+        const rows = data.trim().split("\n").map(row => row.split(","));
+        const table = document.getElementById("csv-table");
+        rows.forEach((row, i) => {
           const tr = document.createElement("tr");
-          cols.forEach(col => {
-            const td = document.createElement("td");
-            td.textContent = col;
+          row.forEach(cell => {
+            const td = document.createElement(i === 0 ? "th" : "td");
+            td.textContent = cell;
             tr.appendChild(td);
           });
-          tbody.appendChild(tr);
+          table.appendChild(tr);
         });
       })
-      .catch(err => {
-        const tbody = document.querySelector("#logTable tbody");
-        tbody.innerHTML = `<tr><td colspan="5">データの取得に失敗しました。</td></tr>`;
-        console.error("CSV読み込みエラー:", err);
+      .catch(error => {
+        document.body.innerHTML += `<p style="color:red;">データの取得に失敗しました。</p>`;
+        console.error("CSV読み込みエラー:", error);
       });
   </script>
 </body>
