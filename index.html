@@ -1,181 +1,100 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>スプレッドシート複数シート + プレイヤー合計表示（色分け・カンマ付き）</title>
-<style>
-  body { font-family: sans-serif; padding: 20px; }
-  select { margin-bottom: 20px; font-size: 16px; }
-  table { border-collapse: collapse; width: 100%; max-width: 800px; margin-bottom: 20px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: right; }
-  th { background: #eee; text-align: center; }
-  #sumTable {
-    border-collapse: collapse;
-    width: 400px;
-    margin-top: 10px;
-  }
-  #sumTable th, #sumTable td {
-    border: 1px solid #ccc;
-    padding: 8px 12px;
-    text-align: left;
-  }
-  #sumTable th {
-    background: #f5f5f5;
-    width: 70%;
-  }
-  #sumTable td {
-    text-align: right;
-    width: 30%;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>スプレッドシート表示</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f8f8f8;
+    }
+    table {
+      border-collapse: collapse;
+      background: white;
+      width: 100%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5rem 1rem;
+      text-align: right;
+    }
+    th {
+      background: #eee;
+      text-align: center;
+    }
+    td.positive {
+      color: green;
+    }
+    td.negative {
+      color: red;
+    }
+    td.zero {
+      color: black;
+    }
+  </style>
 </head>
 <body>
+  <h2>共有会計表</h2>
+  <table id="sheetTable"></table>
 
-<h2>シート選択</h2>
-<select id="sheetSelect"></select>
+  <script>
+    const url = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec";
 
-<table id="dataTable">
-  <thead></thead>
-  <tbody></tbody>
-</table>
-
-<h3>プレイヤー別 金額合計</h3>
-<table id="sumTable">
-  <thead>
-    <tr><th>プレイヤー名</th><th>合計金額 (円)</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<script>
-  const url = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec";
-
-  const sheetSelect = document.getElementById("sheetSelect");
-  const thead = document.querySelector("#dataTable thead");
-  const tbody = document.querySelector("#dataTable tbody");
-  const sumTableBody = document.querySelector("#sumTable tbody");
-  let allData = {};
-
-  function drawTable(sheetName) {
-    thead.innerHTML = "";
-    tbody.innerHTML = "";
-    sumTableBody.innerHTML = "";
-
-    if (!allData[sheetName] || allData[sheetName].length === 0) {
-      tbody.innerHTML = "<tr><td colspan='100%'>データなし</td></tr>";
-      sumTableBody.innerHTML = "<tr><td colspan='2'>合計データなし</td></tr>";
-      return;
-    }
-
-    const headers = Object.keys(allData[sheetName][0]);
-    const trHead = document.createElement("tr");
-    headers.forEach(h => {
-      const th = document.createElement("th");
-      th.textContent = h;
-      trHead.appendChild(th);
-    });
-    thead.appendChild(trHead);
-
-    allData[sheetName].forEach(row => {
-      const tr = document.createElement("tr");
-      headers.forEach(h => {
-        const td = document.createElement("td");
-        const raw = row[h];
-
-        // 数値か判定（カンマを除去して数値化）
-        const num = Number(String(raw).replace(/,/g, ""));
-
-        if (!isNaN(num) && raw !== "" && raw !== null) {
-          // 数値ならカンマ付き表示＋色分け
-          td.textContent = num.toLocaleString();
-
-          if (num > 0) {
-            td.style.color = "green";
-          } else if (num < 0) {
-            td.style.color = "red";
-          } else {
-            td.style.color = "black";
-          }
-        } else {
-          // 数値でなければそのまま
-          td.textContent = raw;
-          td.style.color = "black";
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          document.getElementById("sheetTable").textContent = "データがありません";
+          return;
         }
 
-        tr.appendChild(td);
+        const headers = Object.keys(data[0]);
+        const table = document.getElementById("sheetTable");
+
+        // ヘッダー行
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+        headers.forEach(h => {
+          const th = document.createElement("th");
+          th.textContent = h;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // データ行
+        const tbody = document.createElement("tbody");
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          headers.forEach(h => {
+            const td = document.createElement("td");
+            const raw = row[h];
+            const cleaned = String(raw).replace(/,/g, "").trim();
+            const num = Number(cleaned);
+
+            if (!isNaN(num) && cleaned !== "") {
+              const formatted = (num > 0 ? "+" : "") + num.toLocaleString();
+              td.textContent = formatted;
+
+              if (num > 0) td.classList.add("positive");
+              else if (num < 0) td.classList.add("negative");
+              else td.classList.add("zero");
+            } else {
+              td.textContent = raw;
+            }
+
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+      })
+      .catch(err => {
+        document.getElementById("sheetTable").textContent = "エラーが発生しました: " + err;
+        console.error(err);
       });
-      tbody.appendChild(tr);
-    });
-
-    // 合計計算（カンマ除去して数値化）
-    const sums = {};
-    allData[sheetName].forEach(row => {
-      Object.keys(row).forEach(key => {
-        const raw = row[key] || "";
-        const val = Number(String(raw).replace(/,/g, "")) || 0;
-        sums[key] = (sums[key] || 0) + val;
-      });
-    });
-
-    // 合計を表形式で表示（+/-色分け付き）
-    Object.entries(sums).forEach(([player, total]) => {
-      const tr = document.createElement("tr");
-      const tdName = document.createElement("td");
-      tdName.textContent = player;
-
-      const tdSum = document.createElement("td");
-      let formatted = total.toLocaleString();
-      let sign = "";
-      let color = "";
-
-      if (total > 0) {
-        sign = "+";
-        color = "green";
-      } else if (total < 0) {
-        sign = "";
-        color = "red";
-      } else {
-        sign = "";
-        color = "black";
-      }
-
-      tdSum.textContent = sign + formatted;
-      tdSum.style.color = color;
-
-      tr.appendChild(tdName);
-      tr.appendChild(tdSum);
-      sumTableBody.appendChild(tr);
-    });
-  }
-
-  function setupSelect() {
-    sheetSelect.innerHTML = "";
-    Object.keys(allData).forEach(sheetName => {
-      const option = document.createElement("option");
-      option.value = sheetName;
-      option.textContent = sheetName;
-      sheetSelect.appendChild(option);
-    });
-    drawTable(sheetSelect.value);
-  }
-
-  sheetSelect.addEventListener("change", () => {
-    drawTable(sheetSelect.value);
-  });
-
-  fetch(url)
-    .then(res => res.json())
-    .then(json => {
-      allData = json;
-      setupSelect();
-    })
-    .catch(e => {
-      tbody.innerHTML = "<tr><td colspan='100%'>データ取得失敗</td></tr>";
-      sumTableBody.innerHTML = "<tr><td colspan='2'>合計データ取得失敗</td></tr>";
-      console.error(e);
-    });
-</script>
-
+  </script>
 </body>
 </html>
