@@ -2,13 +2,27 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<title>プレイヤー別合計表示</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>スプレッドシート複数シート + プレイヤー合計表示</title>
 <style>
-  /* 必要に応じてCSSはそのまま */
+  body { font-family: sans-serif; padding: 20px; }
+  select { margin-bottom: 20px; font-size: 16px; }
+  table { border-collapse: collapse; width: 100%; max-width: 800px; margin-bottom: 20px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: right; }
+  th { background: #eee; text-align: center; }
+  #sumBox {
+    border: 1px solid #ccc;
+    padding: 10px 15px;
+    max-width: 400px;
+    background: #fafafa;
+    white-space: pre-line;
+    font-size: 16px;
+  }
 </style>
 </head>
 <body>
 
+<h2>シート選択</h2>
 <select id="sheetSelect"></select>
 
 <table id="dataTable">
@@ -16,6 +30,7 @@
   <tbody></tbody>
 </table>
 
+<h3>プレイヤー別 金額合計</h3>
 <div id="sumBox">読み込み中...</div>
 
 <script>
@@ -51,17 +66,19 @@
       const tr = document.createElement("tr");
       headers.forEach(h => {
         const td = document.createElement("td");
+        // 値を右寄せで表示（数値っぽく）
         td.textContent = row[h];
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
     });
 
-    // 全列の合計を計算する
+    // プレイヤー別合計計算（カンマ除去して数値化）
     const sums = {};
     allData[sheetName].forEach(row => {
       Object.keys(row).forEach(key => {
-        const val = Number(row[key]) || 0;
+        const raw = row[key] || "";
+        const val = Number(String(raw).replace(/,/g, "")) || 0;
         sums[key] = (sums[key] || 0) + val;
       });
     });
