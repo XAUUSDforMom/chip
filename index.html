@@ -2,27 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>スプレッドシート 複数シート表示 + プレイヤー別合計</title>
+<title>プレイヤー別合計表示</title>
 <style>
-  body { font-family: sans-serif; padding: 20px; }
-  select { margin-bottom: 20px; font-size: 16px; }
-  table { border-collapse: collapse; width: 100%; max-width: 800px; margin-bottom: 20px;}
-  th, td { border: 1px solid #ccc; padding: 8px; }
-  th { background: #eee; }
-  #sumBox {
-    border: 1px solid #ccc;
-    padding: 10px 15px;
-    max-width: 400px;
-    background: #fafafa;
-    white-space: pre-line; /* 改行を有効に */
-    font-size: 16px;
-  }
+  /* 必要に応じてCSSはそのまま */
 </style>
 </head>
 <body>
 
-<h2>シート選択</h2>
 <select id="sheetSelect"></select>
 
 <table id="dataTable">
@@ -30,7 +16,6 @@
   <tbody></tbody>
 </table>
 
-<h3>プレイヤー別 金額合計</h3>
 <div id="sumBox">読み込み中...</div>
 
 <script>
@@ -72,15 +57,16 @@
       tbody.appendChild(tr);
     });
 
-    // プレイヤー別合計計算
+    // 全列の合計を計算する
     const sums = {};
     allData[sheetName].forEach(row => {
-      const player = row["プレイヤー"];
-      let amount = Number(row["金額"]) || 0;
-      sums[player] = (sums[player] || 0) + amount;
+      Object.keys(row).forEach(key => {
+        const val = Number(row[key]) || 0;
+        sums[key] = (sums[key] || 0) + val;
+      });
     });
 
-    // テキストを作成して枠内に表示
+    // 合計表示用テキスト作成
     let sumText = "";
     Object.entries(sums).forEach(([player, total]) => {
       sumText += `${player} : ${total.toLocaleString()} 円\n`;
