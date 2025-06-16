@@ -3,13 +3,26 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>スプレッドシート 複数シート表示</title>
+<title>スプレッドシート 複数シート表示 + プレイヤー別合計</title>
 <style>
   body { font-family: sans-serif; padding: 20px; }
   select { margin-bottom: 20px; font-size: 16px; }
-  table { border-collapse: collapse; width: 100%; max-width: 800px; }
+  table { border-collapse: collapse; width: 100%; max-width: 800px; margin-bottom: 20px;}
   th, td { border: 1px solid #ccc; padding: 8px; }
   th { background: #eee; }
+  #sumTable {
+    border-collapse: collapse;
+    max-width: 400px;
+    margin-top: 10px;
+  }
+  #sumTable th, #sumTable td {
+    border: 1px solid #ccc;
+    padding: 6px 12px;
+    background: #fafafa;
+  }
+  #sumTable th {
+    background: #ddd;
+  }
 </style>
 </head>
 <body>
@@ -22,17 +35,27 @@
   <tbody></tbody>
 </table>
 
+<h3>プレイヤー別 金額合計</h3>
+<table id="sumTable">
+  <thead>
+    <tr><th>プレイヤー</th><th>合計金額</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
 <script>
   const url = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec";
 
   const sheetSelect = document.getElementById("sheetSelect");
   const thead = document.querySelector("#dataTable thead");
   const tbody = document.querySelector("#dataTable tbody");
+  const sumTbody = document.querySelector("#sumTable tbody");
   let allData = {};
 
   function drawTable(sheetName) {
     thead.innerHTML = "";
     tbody.innerHTML = "";
+    sumTbody.innerHTML = "";
 
     if (!allData[sheetName] || allData[sheetName].length === 0) {
       tbody.innerHTML = "<tr><td colspan='100%'>データなし</td></tr>";
@@ -48,6 +71,7 @@
     });
     thead.appendChild(trHead);
 
+    // テーブル本体表示
     allData[sheetName].forEach(row => {
       const tr = document.createElement("tr");
       headers.forEach(h => {
@@ -56,6 +80,26 @@
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
+    });
+
+    // プレイヤーごとの金額合計計算
+    const sums = {};
+    allData[sheetName].forEach(row => {
+      const player = row["プレイヤー"];
+      let amount = Number(row["金額"]) || 0;
+      sums[player] = (sums[player] || 0) + amount;
+    });
+
+    // 合計をテーブルに表示
+    Object.entries(sums).forEach(([player, total]) => {
+      const tr = document.createElement("tr");
+      const tdPlayer = document.createElement("td");
+      tdPlayer.textContent = player;
+      const tdSum = document.createElement("td");
+      tdSum.textContent = total.toLocaleString(); // 桁区切りあり
+      tr.appendChild(tdPlayer);
+      tr.appendChild(tdSum);
+      sumTbody.appendChild(tr);
     });
   }
 
