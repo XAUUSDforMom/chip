@@ -8,50 +8,15 @@
       font-family: sans-serif;
       padding: 20px;
     }
-    table {
-      border-collapse: collapse;
+    iframe {
       width: 100%;
-    }
-    th, td {
-      border: 1px solid #aaa;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #f2f2f2;
+      height: 600px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
 <body>
   <h2>ゲーム内送金履歴</h2>
-  <table id="csv-table"></table>
-
-  <!-- PapaParse CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <script>
-    const csvUrl = "https://docs.google.com/spreadsheets/d/1-kXlRHjuOwJ8FnCi3RoD_hlivKC6CcBBsqlzl2_dP08/export?format=csv";
-
-    Papa.parse(csvUrl, {
-      download: true,
-      header: false,
-      complete: function(results) {
-        const table = document.getElementById("csv-table");
-        results.data.forEach((row, i) => {
-          const tr = document.createElement("tr");
-          row.forEach(cell => {
-            const el = document.createElement(i === 0 ? "th" : "td");
-            el.textContent = cell;
-            tr.appendChild(el);
-          });
-          table.appendChild(tr);
-        });
-      },
-      error: function(err) {
-        document.body.innerHTML += `<p style="color:red;">データの取得に失敗しました。</p>`;
-        console.error("PapaParse error:", err);
-      }
-    });
-  </script>
+  <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQAxulVcZfG7UHzrxXmqwIN7KJHqUVLHD0uREGRVkUOX9hDU7XXOCme1A3F5AToTjP_RUZXQH_L9P1o/pubhtml?widget=true&amp;headers=false"></iframe>
 </body>
 </html>
