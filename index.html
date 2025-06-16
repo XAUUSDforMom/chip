@@ -1,185 +1,203 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>スプレッドシート表示（スマホ対応）</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 10px;
-      background-color: #f9f9f9;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>スプレッドシート複数シート + プレイヤー合計表示（スマホ対応）</title>
+<style>
+  body {
+    font-family: sans-serif;
+    padding: 20px;
+  }
+  select {
+    margin-bottom: 20px;
+    font-size: 16px;
+    width: 100%;
+    max-width: 400px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: right;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  th {
+    background: #eee;
+    text-align: center;
+  }
+  #sumTable {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 10px;
+  }
+  #sumTable th, #sumTable td {
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  #sumTable th {
+    background: #f5f5f5;
+    width: 70%;
+  }
+  #sumTable td {
+    text-align: right;
+    width: 30%;
+  }
+
+  /* ▼ スマホ用：4列目以降を非表示にする */
+  @media screen and (max-width: 600px) {
+    table tr > :nth-child(n+4),
+    table thead tr > :nth-child(n+4) {
+      display: none;
     }
-    h2, h3 {
-      font-size: 1.2rem;
-      margin-top: 1.2rem;
-    }
-    select {
-      font-size: 1rem;
-      padding: 8px;
-      width: 100%;
-      max-width: 300px;
-      margin-bottom: 15px;
-    }
-    .table-container {
-      overflow-x: auto;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background: white;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      min-width: 500px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px 10px;
-      text-align: right;
-      font-size: 0.9rem;
-    }
-    th {
-      background-color: #eee;
-      text-align: center;
-    }
-    td {
-      white-space: nowrap;
-    }
-    td.positive {
-      color: green;
-    }
-    td.negative {
-      color: red;
-    }
-    td.zero {
-      color: black;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
 
-  <h2>シート選択</h2>
-  <select id="sheetSelect"></select>
+<h2>シート選択</h2>
+<select id="sheetSelect"></select>
 
-  <div class="table-container">
-    <table id="dataTable">
-      <thead></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<table id="dataTable">
+  <thead></thead>
+  <tbody></tbody>
+</table>
 
-  <h3>プレイヤー別 金額合計</h3>
-  <div class="table-container">
-    <table id="sumTable">
-      <thead>
-        <tr><th>プレイヤー名</th><th>合計金額</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<h3>プレイヤー別 金額合計</h3>
+<table id="sumTable">
+  <thead>
+    <tr><th>プレイヤー名</th><th>合計金額 (円)</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <script>
-    const url = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec";
-    const sheetSelect = document.getElementById("sheetSelect");
-    const thead = document.querySelector("#dataTable thead");
-    const tbody = document.querySelector("#dataTable tbody");
-    const sumTableBody = document.querySelector("#sumTable tbody");
-    let allData = {};
+<script>
+  const url = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec";
 
-    function drawTable(sheetName) {
-      thead.innerHTML = "";
-      tbody.innerHTML = "";
-      sumTableBody.innerHTML = "";
+  const sheetSelect = document.getElementById("sheetSelect");
+  const thead = document.querySelector("#dataTable thead");
+  const tbody = document.querySelector("#dataTable tbody");
+  const sumTableBody = document.querySelector("#sumTable tbody");
+  let allData = {};
 
-      if (!allData[sheetName] || allData[sheetName].length === 0) {
-        tbody.innerHTML = "<tr><td colspan='100%'>データなし</td></tr>";
-        sumTableBody.innerHTML = "<tr><td colspan='2'>合計データなし</td></tr>";
-        return;
-      }
+  function drawTable(sheetName) {
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+    sumTableBody.innerHTML = "";
 
-      const headers = Object.keys(allData[sheetName][0]);
-      const trHead = document.createElement("tr");
+    if (!allData[sheetName] || allData[sheetName].length === 0) {
+      tbody.innerHTML = "<tr><td colspan='100%'>データなし</td></tr>";
+      sumTableBody.innerHTML = "<tr><td colspan='2'>合計データなし</td></tr>";
+      return;
+    }
+
+    const headers = Object.keys(allData[sheetName][0]);
+    const trHead = document.createElement("tr");
+    headers.forEach(h => {
+      const th = document.createElement("th");
+      th.textContent = h;
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+
+    allData[sheetName].forEach(row => {
+      const tr = document.createElement("tr");
       headers.forEach(h => {
-        const th = document.createElement("th");
-        th.textContent = h;
-        trHead.appendChild(th);
+        const td = document.createElement("td");
+        const raw = row[h];
+
+        const num = Number(String(raw).replace(/,/g, ""));
+
+        if (!isNaN(num) && raw !== "" && raw !== null) {
+          const isNegative = num < 0;
+          const formatted = Math.abs(num).toLocaleString();
+          td.textContent = (isNegative ? "-" : "+") + formatted;
+          td.style.color = isNegative ? "red" : "green";
+        } else {
+          td.textContent = raw;
+          td.style.color = "black";
+        }
+
+        tr.appendChild(td);
       });
-      thead.appendChild(trHead);
-
-      allData[sheetName].forEach(row => {
-        const tr = document.createElement("tr");
-        headers.forEach(h => {
-          const td = document.createElement("td");
-          const raw = row[h];
-          const num = Number(String(raw).replace(/,/g, ""));
-
-          if (!isNaN(num) && raw !== "" && raw !== null) {
-            const formatted = (num > 0 ? "+" : "") + num.toLocaleString();
-            td.textContent = formatted;
-            td.className = num > 0 ? "positive" : num < 0 ? "negative" : "zero";
-          } else {
-            td.textContent = raw;
-            td.className = "zero";
-          }
-
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-
-      const sums = {};
-      allData[sheetName].forEach(row => {
-        Object.keys(row).forEach(key => {
-          const raw = row[key] || "";
-          const val = Number(String(raw).replace(/,/g, "")) || 0;
-          sums[key] = (sums[key] || 0) + val;
-        });
-      });
-
-      Object.entries(sums).forEach(([player, total]) => {
-        const tr = document.createElement("tr");
-        const tdName = document.createElement("td");
-        tdName.textContent = player;
-
-        const tdSum = document.createElement("td");
-        const formatted = (total > 0 ? "+" : "") + total.toLocaleString();
-        tdSum.textContent = formatted;
-        tdSum.className = total > 0 ? "positive" : total < 0 ? "negative" : "zero";
-
-        tr.appendChild(tdName);
-        tr.appendChild(tdSum);
-        sumTableBody.appendChild(tr);
-      });
-    }
-
-    function setupSelect() {
-      sheetSelect.innerHTML = "";
-      Object.keys(allData).forEach(sheetName => {
-        const option = document.createElement("option");
-        option.value = sheetName;
-        option.textContent = sheetName;
-        sheetSelect.appendChild(option);
-      });
-      drawTable(sheetSelect.value);
-    }
-
-    sheetSelect.addEventListener("change", () => {
-      drawTable(sheetSelect.value);
+      tbody.appendChild(tr);
     });
 
-    fetch(url)
-      .then(res => res.json())
-      .then(json => {
-        allData = json;
-        setupSelect();
-      })
-      .catch(e => {
-        tbody.innerHTML = "<tr><td colspan='100%'>データ取得失敗</td></tr>";
-        sumTableBody.innerHTML = "<tr><td colspan='2'>合計データ取得失敗</td></tr>";
-        console.error(e);
+    // 合計計算
+    const sums = {};
+    allData[sheetName].forEach(row => {
+      Object.keys(row).forEach(key => {
+        const raw = row[key] || "";
+        const val = Number(String(raw).replace(/,/g, "")) || 0;
+        sums[key] = (sums[key] || 0) + val;
       });
-  </script>
+    });
+
+    Object.entries(sums).forEach(([player, total]) => {
+      const tr = document.createElement("tr");
+      const tdName = document.createElement("td");
+      tdName.textContent = player;
+
+      const tdSum = document.createElement("td");
+      let formatted = Math.abs(total).toLocaleString();
+      let sign = "";
+      let color = "";
+
+      if (total > 0) {
+        sign = "+";
+        color = "green";
+      } else if (total < 0) {
+        sign = "-";
+        color = "red";
+      } else {
+        sign = "";
+        color = "black";
+      }
+
+      tdSum.textContent = sign + formatted;
+      tdSum.style.color = color;
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdSum);
+      sumTableBody.appendChild(tr);
+    });
+  }
+
+  function setupSelect() {
+    sheetSelect.innerHTML = "";
+    Object.keys(allData).forEach(sheetName => {
+      const option = document.createElement("option");
+      option.value = sheetName;
+      option.textContent = sheetName;
+      sheetSelect.appendChild(option);
+    });
+    drawTable(sheetSelect.value);
+  }
+
+  sheetSelect.addEventListener("change", () => {
+    drawTable(sheetSelect.value);
+  });
+
+  fetch(url)
+    .then(res => res.json())
+    .then(json => {
+      allData = json;
+      setupSelect();
+    })
+    .catch(e => {
+      tbody.innerHTML = "<tr><td colspan='100%'>データ取得失敗</td></tr>";
+      sumTableBody.innerHTML = "<tr><td colspan='2'>合計データ取得失敗</td></tr>";
+      console.error(e);
+    });
+</script>
 
 </body>
 </html>
