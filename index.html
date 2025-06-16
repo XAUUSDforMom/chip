@@ -3,17 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>スプレッドシート JSON 表示</title>
+<title>スプレッドシート JSON 複数シート表示</title>
 <style>
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: #f9f9f9;
     padding: 20px;
   }
+  select {
+    font-size: 16px;
+    margin-bottom: 16px;
+    padding: 6px 10px;
+  }
   table {
     border-collapse: collapse;
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
     margin: auto;
     background: #fff;
     border-radius: 8px;
@@ -35,51 +40,83 @@
 </head>
 <body>
 
-<h1>スプレッドシート JSON 表示サンプル</h1>
+<h1>複数シート JSON 表示サンプル</h1>
+
+<label for="sheetSelect">表示するシートを選択：</label>
+<select id="sheetSelect"></select>
+
 <table id="data-table">
   <thead></thead>
   <tbody></tbody>
 </table>
 
 <script>
-  // ここにあなたのGoogle Apps Scriptの公開URLを入れてください
-  const jsonUrl = "https://script.google.com/macros/s/AKfycbzCtIqxtASCZUvydeEEhd3bGfTjVUFDxDyFt1RDjew6qCvzljc0y5nfsMy8_jrNnYCh/exec";
+  const jsonUrl = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec"; // ここにApps Script URLを入れる
+
+  let allData = {};
+  let currentSheet = null;
+
+  const sheetSelect = document.getElementById("sheetSelect");
+  const tableHead = document.querySelector("#data-table thead");
+  const tableBody = document.querySelector("#data-table tbody");
+
+  // テーブル描画関数
+  function renderTable(sheetName) {
+    tableHead.innerHTML = "";
+    tableBody.innerHTML = "";
+
+    if (!allData[sheetName] || allData[sheetName].length === 0) {
+      tableBody.innerHTML = "<tr><td>データがありません</td></tr>";
+      return;
+    }
+
+    const headers = Object.keys(allData[sheetName][0]);
+    const headerRow = document.createElement("tr");
+    headers.forEach(header => {
+      const th = document.createElement("th");
+      th.textContent = header;
+      headerRow.appendChild(th);
+    });
+    tableHead.appendChild(headerRow);
+
+    allData[sheetName].forEach(item => {
+      const tr = document.createElement("tr");
+      headers.forEach(key => {
+        const td = document.createElement("td");
+        td.textContent = item[key];
+        tr.appendChild(td);
+      });
+      tableBody.appendChild(tr);
+    });
+  }
+
+  // セレクトボックスにシート名をセット
+  function populateSheetSelect() {
+    sheetSelect.innerHTML = "";
+    Object.keys(allData).forEach(sheetName => {
+      const option = document.createElement("option");
+      option.value = sheetName;
+      option.textContent = sheetName;
+      sheetSelect.appendChild(option);
+    });
+    currentSheet = Object.keys(allData)[0];
+    renderTable(currentSheet);
+  }
+
+  sheetSelect.addEventListener("change", e => {
+    currentSheet = e.target.value;
+    renderTable(currentSheet);
+  });
 
   fetch(jsonUrl)
     .then(response => response.json())
-    .then(data => {
-      if (!data.length) {
-        document.getElementById("data-table").innerHTML = "<tr><td>データがありません</td></tr>";
-        return;
-      }
-
-      const tableHead = document.querySelector("#data-table thead");
-      const tableBody = document.querySelector("#data-table tbody");
-
-      // ヘッダー作成（JSONの最初のオブジェクトのキーを使用）
-      const headers = Object.keys(data[0]);
-      const headerRow = document.createElement("tr");
-      headers.forEach(header => {
-        const th = document.createElement("th");
-        th.textContent = header;
-        headerRow.appendChild(th);
-      });
-      tableHead.appendChild(headerRow);
-
-      // データ行作成
-      data.forEach(item => {
-        const tr = document.createElement("tr");
-        headers.forEach(key => {
-          const td = document.createElement("td");
-          td.textContent = item[key];
-          tr.appendChild(td);
-        });
-        tableBody.appendChild(tr);
-      });
+    .then(json => {
+      allData = json;
+      populateSheetSelect();
     })
     .catch(err => {
       console.error(err);
-      document.getElementById("data-table").innerHTML = "<tr><td>データの取得に失敗しました</td></tr>";
+      tableBody.innerHTML = "<tr><td>データの取得に失敗しました</td></tr>";
     });
 </script>
 
