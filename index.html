@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>スプレッドシート複数シート + プレイヤー合計表示（色分け付き）</title>
+<title>スプレッドシート複数シート + プレイヤー合計表示（色分け・カンマ付き）</title>
 <style>
   body { font-family: sans-serif; padding: 20px; }
   select { margin-bottom: 20px; font-size: 16px; }
@@ -81,7 +81,28 @@
       const tr = document.createElement("tr");
       headers.forEach(h => {
         const td = document.createElement("td");
-        td.textContent = row[h];
+        const raw = row[h];
+
+        // 数値か判定（カンマを除去して数値化）
+        const num = Number(String(raw).replace(/,/g, ""));
+
+        if (!isNaN(num) && raw !== "" && raw !== null) {
+          // 数値ならカンマ付き表示＋色分け
+          td.textContent = num.toLocaleString();
+
+          if (num > 0) {
+            td.style.color = "green";
+          } else if (num < 0) {
+            td.style.color = "red";
+          } else {
+            td.style.color = "black";
+          }
+        } else {
+          // 数値でなければそのまま
+          td.textContent = raw;
+          td.style.color = "black";
+        }
+
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -104,7 +125,6 @@
       tdName.textContent = player;
 
       const tdSum = document.createElement("td");
-      // 表示用文字列作成
       let formatted = total.toLocaleString();
       let sign = "";
       let color = "";
@@ -113,11 +133,9 @@
         sign = "+";
         color = "green";
       } else if (total < 0) {
-        // マイナスはtoLocaleString()で付くのでそのまま
         sign = "";
         color = "red";
       } else {
-        // 0は黒色で表示
         sign = "";
         color = "black";
       }
