@@ -3,95 +3,63 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>スプレッドシート JSON 複数シート表示</title>
+<title>スプレッドシート 複数シート表示</title>
 <style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: #f9f9f9;
-    padding: 20px;
-  }
-  select {
-    font-size: 16px;
-    margin-bottom: 16px;
-    padding: 6px 10px;
-  }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    max-width: 900px;
-    margin: auto;
-    background: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 0 8px rgba(0,0,0,0.1);
-  }
-  th, td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #ddd;
-    text-align: left;
-  }
-  th {
-    background: #f0f0f0;
-  }
-  tr:last-child td {
-    border-bottom: none;
-  }
+  body { font-family: sans-serif; padding: 20px; }
+  select { margin-bottom: 20px; font-size: 16px; }
+  table { border-collapse: collapse; width: 100%; max-width: 800px; }
+  th, td { border: 1px solid #ccc; padding: 8px; }
+  th { background: #eee; }
 </style>
 </head>
 <body>
 
-<h1>複数シート JSON 表示サンプル</h1>
-
-<label for="sheetSelect">表示するシートを選択：</label>
+<h2>シート選択</h2>
 <select id="sheetSelect"></select>
 
-<table id="data-table">
+<table id="dataTable">
   <thead></thead>
   <tbody></tbody>
 </table>
 
 <script>
-  const jsonUrl = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec"; // ここにApps Script URLを入れる
-
-  let allData = {};
-  let currentSheet = null;
+  const url = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec";
 
   const sheetSelect = document.getElementById("sheetSelect");
-  const tableHead = document.querySelector("#data-table thead");
-  const tableBody = document.querySelector("#data-table tbody");
+  const thead = document.querySelector("#dataTable thead");
+  const tbody = document.querySelector("#dataTable tbody");
+  let allData = {};
 
-  // テーブル描画関数
-  function renderTable(sheetName) {
-    tableHead.innerHTML = "";
-    tableBody.innerHTML = "";
+  function drawTable(sheetName) {
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
 
     if (!allData[sheetName] || allData[sheetName].length === 0) {
-      tableBody.innerHTML = "<tr><td>データがありません</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='100%'>データなし</td></tr>";
       return;
     }
 
     const headers = Object.keys(allData[sheetName][0]);
-    const headerRow = document.createElement("tr");
-    headers.forEach(header => {
+    const trHead = document.createElement("tr");
+    headers.forEach(h => {
       const th = document.createElement("th");
-      th.textContent = header;
-      headerRow.appendChild(th);
+      th.textContent = h;
+      trHead.appendChild(th);
     });
-    tableHead.appendChild(headerRow);
+    thead.appendChild(trHead);
 
-    allData[sheetName].forEach(item => {
+    allData[sheetName].forEach(row => {
       const tr = document.createElement("tr");
-      headers.forEach(key => {
+      headers.forEach(h => {
         const td = document.createElement("td");
-        td.textContent = item[key];
+        td.textContent = row[h];
         tr.appendChild(td);
       });
-      tableBody.appendChild(tr);
+      tbody.appendChild(tr);
     });
   }
 
-  // セレクトボックスにシート名をセット
-  function populateSheetSelect() {
+  function setupSelect() {
     sheetSelect.innerHTML = "";
     Object.keys(allData).forEach(sheetName => {
       const option = document.createElement("option");
@@ -99,24 +67,22 @@
       option.textContent = sheetName;
       sheetSelect.appendChild(option);
     });
-    currentSheet = Object.keys(allData)[0];
-    renderTable(currentSheet);
+    drawTable(sheetSelect.value);
   }
 
-  sheetSelect.addEventListener("change", e => {
-    currentSheet = e.target.value;
-    renderTable(currentSheet);
+  sheetSelect.addEventListener("change", () => {
+    drawTable(sheetSelect.value);
   });
 
-  fetch(jsonUrl)
-    .then(response => response.json())
+  fetch(url)
+    .then(res => res.json())
     .then(json => {
       allData = json;
-      populateSheetSelect();
+      setupSelect();
     })
-    .catch(err => {
-      console.error(err);
-      tableBody.innerHTML = "<tr><td>データの取得に失敗しました</td></tr>";
+    .catch(e => {
+      tbody.innerHTML = "<tr><td colspan='100%'>データ取得失敗</td></tr>";
+      console.error(e);
     });
 </script>
 
