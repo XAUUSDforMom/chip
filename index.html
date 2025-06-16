@@ -10,18 +10,13 @@
   table { border-collapse: collapse; width: 100%; max-width: 800px; margin-bottom: 20px;}
   th, td { border: 1px solid #ccc; padding: 8px; }
   th { background: #eee; }
-  #sumTable {
-    border-collapse: collapse;
-    max-width: 400px;
-    margin-top: 10px;
-  }
-  #sumTable th, #sumTable td {
+  #sumBox {
     border: 1px solid #ccc;
-    padding: 6px 12px;
+    padding: 10px 15px;
+    max-width: 400px;
     background: #fafafa;
-  }
-  #sumTable th {
-    background: #ddd;
+    white-space: pre-line; /* 改行を有効に */
+    font-size: 16px;
   }
 </style>
 </head>
@@ -36,12 +31,7 @@
 </table>
 
 <h3>プレイヤー別 金額合計</h3>
-<table id="sumTable">
-  <thead>
-    <tr><th>プレイヤー</th><th>合計金額</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<div id="sumBox">読み込み中...</div>
 
 <script>
   const url = "https://script.google.com/macros/s/AKfycbzotwknkpjySFF5NTR2-WkZuiksQl9W86a7Cz_WLOv9P8JYHQgOWQfgY_D150sMHUH-/exec";
@@ -49,16 +39,17 @@
   const sheetSelect = document.getElementById("sheetSelect");
   const thead = document.querySelector("#dataTable thead");
   const tbody = document.querySelector("#dataTable tbody");
-  const sumTbody = document.querySelector("#sumTable tbody");
+  const sumBox = document.getElementById("sumBox");
   let allData = {};
 
   function drawTable(sheetName) {
     thead.innerHTML = "";
     tbody.innerHTML = "";
-    sumTbody.innerHTML = "";
+    sumBox.textContent = "";
 
     if (!allData[sheetName] || allData[sheetName].length === 0) {
       tbody.innerHTML = "<tr><td colspan='100%'>データなし</td></tr>";
+      sumBox.textContent = "合計データなし";
       return;
     }
 
@@ -71,7 +62,6 @@
     });
     thead.appendChild(trHead);
 
-    // テーブル本体表示
     allData[sheetName].forEach(row => {
       const tr = document.createElement("tr");
       headers.forEach(h => {
@@ -82,7 +72,7 @@
       tbody.appendChild(tr);
     });
 
-    // プレイヤーごとの金額合計計算
+    // プレイヤー別合計計算
     const sums = {};
     allData[sheetName].forEach(row => {
       const player = row["プレイヤー"];
@@ -90,17 +80,12 @@
       sums[player] = (sums[player] || 0) + amount;
     });
 
-    // 合計をテーブルに表示
+    // テキストを作成して枠内に表示
+    let sumText = "";
     Object.entries(sums).forEach(([player, total]) => {
-      const tr = document.createElement("tr");
-      const tdPlayer = document.createElement("td");
-      tdPlayer.textContent = player;
-      const tdSum = document.createElement("td");
-      tdSum.textContent = total.toLocaleString(); // 桁区切りあり
-      tr.appendChild(tdPlayer);
-      tr.appendChild(tdSum);
-      sumTbody.appendChild(tr);
+      sumText += `${player} : ${total.toLocaleString()} 円\n`;
     });
+    sumBox.textContent = sumText.trim();
   }
 
   function setupSelect() {
@@ -126,6 +111,7 @@
     })
     .catch(e => {
       tbody.innerHTML = "<tr><td colspan='100%'>データ取得失敗</td></tr>";
+      sumBox.textContent = "合計データ取得失敗";
       console.error(e);
     });
 </script>
