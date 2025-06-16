@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>スプレッドシート複数シート + プレイヤー合計表示（表形式）</title>
+<title>スプレッドシート複数シート + プレイヤー合計表示（色分け付き）</title>
 <style>
   body { font-family: sans-serif; padding: 20px; }
   select { margin-bottom: 20px; font-size: 16px; }
@@ -97,13 +97,34 @@
       });
     });
 
-    // 合計を表形式で表示
+    // 合計を表形式で表示（+/-色分け付き）
     Object.entries(sums).forEach(([player, total]) => {
       const tr = document.createElement("tr");
       const tdName = document.createElement("td");
       tdName.textContent = player;
+
       const tdSum = document.createElement("td");
-      tdSum.textContent = total.toLocaleString();
+      // 表示用文字列作成
+      let formatted = total.toLocaleString();
+      let sign = "";
+      let color = "";
+
+      if (total > 0) {
+        sign = "+";
+        color = "green";
+      } else if (total < 0) {
+        // マイナスはtoLocaleString()で付くのでそのまま
+        sign = "";
+        color = "red";
+      } else {
+        // 0は黒色で表示
+        sign = "";
+        color = "black";
+      }
+
+      tdSum.textContent = sign + formatted;
+      tdSum.style.color = color;
+
       tr.appendChild(tdName);
       tr.appendChild(tdSum);
       sumTableBody.appendChild(tr);
